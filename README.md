@@ -37,5 +37,5 @@ A Python-based turn-based RPG combat system featuring characters with stats, lev
 
 ## 📁 File Structure
 
-- rpg_combat.py – Main code file containing all classes and logic
+- combat_sytem.py – Main code file containing all classes and logic
 - README.md – Project documentation

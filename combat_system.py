@@ -78,3 +78,30 @@ class Character:
         self.defense += 2
         self.speed += 1
         print(f"{self.name} leveled up to Level {self.level}!")
+
+    def special_ability(self, target):
+        """
+        Hero's Power Strike:
+        Deals double attack damage, chance to stun target.
+        Has cooldown to prevent consecutive use.
+        """
+        if self.special_cooldown > 0:
+            print(f"{self.name}'s Power Strike is on cooldown for {self.special_cooldown} more turn(s).")
+            return False  # Cannot use special
+
+        damage = max(1, (self.attack * 2) - (target.defense // 2))
+        print(f"{self.name} uses Power Strike!")
+        target.take_damage(damage)
+        print(f"{target.name} takes {damage} damage from Power Strike!")
+
+        if random.random() < 0.3:
+            target.add_status_effect({"type": "Stun", "turns": 1})
+            print(f"{target.name} is stunned!")
+
+        self.special_cooldown = 3  # Set cooldown for 3 turns
+        return True  # Special used successfully
+
+    def reduce_cooldowns(self):
+        """Reduce cooldown counters by 1 if above zero."""
+        if self.special_cooldown > 0:
+            self.special_cooldown -= 1

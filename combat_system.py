@@ -128,4 +128,66 @@ class Combat:
         """Check if it is currently the player's turn."""
         return self.turn_queue[self.current_turn_index] == self.player
     
+    def player_turn(self, target_index, use_special=False):
+        """
+        Process player's turn:
+        - Validate target
+        - Check for stun
+        - Handle attack or special ability
+        """
+        if target_index < 0 or target_index >= len(self.enemies):
+            print("Invalid target.")
+            return
+
+        target = self.enemies[target_index]
+        if not target.is_alive():
+            print("Target is already defeated.")
+            return
+
+        if self.player.stunned:
+            print(f"{self.player.name} is stunned and skips the turn!")
+            self.player.stunned = False
+            self.next_turn()
+            return
+
+        # Chance to dodge player attack
+        dodge_chance = max(0.05, min(0.3, (target.speed - self.player.speed) * 0.02))
+        if random.random() < dodge_chance:
+            print(f"{target.name} dodged the attack!")
+            self.next_turn()
+            return
+
+        # Player uses special ability if requested and not on cooldown
+        if use_special:
+            special_used = self.player.special_ability(target)
+            if not special_used:
+                print("Special ability not used; performing normal attack instead.")
+                self.basic_attack(target)
+        else:
+            self.basic_attack(target)
+
+        # Reduce player cooldowns at end of turn
+        self.player.reduce_cooldowns()
+        self.next_turn()
+
+    def basic_attack(self, target):
+        """Perform a normal attack on target, with chance for status effects."""
+        damage = max(1, self.player.attack - (target.defense // 2))
+        if random.random() < 0.1:
+            damage = int(damage * 1.5)
+            print("Critical hit!")
+        target.take_damage(damage)
+        print(f"{self.player.name} attacks {target.name} for {damage} damage!")
+
+        # Chance to apply status effects on normal attack
+        if random.random() < 0.2:
+            target.add_status_effect({"type": "Poison", "damage": 2, "turns": 3})
+            print(f"{target.name} is poisoned!")
+        elif random.random() < 0.1:
+            target.add_status_effect({"type": "Burn", "damage": 3, "turns": 2})
+            print(f"{target.name} is burned!")
+
+        if not target.is_alive():
+            print(f"{target.name} has been defeated!")
+            self.player.gain_xp(25)
     

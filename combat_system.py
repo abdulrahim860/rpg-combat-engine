@@ -191,3 +191,68 @@ class Combat:
             print(f"{target.name} has been defeated!")
             self.player.gain_xp(25)
     
+    def process_enemy_turns(self):
+        """
+        Process enemy turns until it becomes the player's turn again or combat ends.
+        Enemies may use Enrage if cooldown allows.
+        """
+        while not self.is_player_turn() and not self.is_combat_over():
+            enemy = self.turn_queue[self.current_turn_index]
+
+            if enemy.is_alive():
+                enemy.apply_status_effects()
+
+                if not enemy.is_alive():
+                    print(f"{enemy.name} died from status effects.")
+                    self.player.gain_xp(25)
+                    self.next_turn()
+                    continue
+
+                if enemy.stunned:
+                    print(f"{enemy.name} is stunned and skips the turn!")
+                    enemy.stunned = False
+                    self.next_turn()
+                    continue
+
+                # Enemy chance to dodge player's counterattack (conceptual)
+                dodge_chance = max(0.05, min(0.3, (self.player.speed - enemy.speed) * 0.02))
+                if random.random() < dodge_chance:
+                    print(f"{self.player.name} dodged the attack from {enemy.name}!")
+                    self.next_turn()
+                    continue
+
+                # Check if enemy can use Enrage (cooldown 3 turns)
+                if self.enemy_enrage_cooldowns[enemy] > 0:
+                    self.enemy_enrage_cooldowns[enemy] -= 1
+                    use_enrage = False
+                else:
+                    use_enrage = random.random() < 0.2  # 20% chance
+
+                damage = max(1, enemy.attack - (self.player.defense // 2))
+
+                if use_enrage:
+                    damage = int(damage * 1.5)
+                    print(f"{enemy.name} uses Enrage! Increased damage!")
+                    if random.random() < 0.3:
+                        self.player.add_status_effect({"type": "Burn", "damage": 3, "turns": 2})
+                        print(f"{self.player.name} is burned!")
+                    self.enemy_enrage_cooldowns[enemy] = 3  # Set cooldown
+
+                if random.random() < 0.1:
+                    damage = int(damage * 1.5)
+                    print("Enemy critical hit!")
+
+                self.player.take_damage(damage)
+                print(f"{enemy.name} attacks {self.player.name} for {damage} damage!")
+
+            self.next_turn()
+
+    def next_turn(self):
+        """
+        Advance to the next alive character in turn queue.
+        Skips dead characters automatically.
+        """
+        self.current_turn_index = (self.current_turn_index + 1) % len(self.turn_queue)
+        while not self.turn_queue[self.current_turn_index].is_alive():
+            self.current_turn_index = (self.current_turn_index + 1) % len(self.turn_queue)
+

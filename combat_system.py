@@ -256,3 +256,60 @@ class Combat:
         while not self.turn_queue[self.current_turn_index].is_alive():
             self.current_turn_index = (self.current_turn_index + 1) % len(self.turn_queue)
 
+def main():
+    """
+    Main game loop to start combat and process player/enemy turns.
+    """
+    # Initialize characters
+    player = Character("Hero", 100, 100, 15, 10, 12)
+    enemy1 = Character("Goblin", 30, 30, 8, 5, 10)
+    enemy2 = Character("Orc", 50, 50, 12, 8, 8)
+
+    combat = Combat(player, [enemy1, enemy2])
+
+    while not combat.is_combat_over():
+        print(f"\nPlayer HP: {player.health}/{player.max_health}")
+        for i, enemy in enumerate(combat.enemies, 1):
+            print(f"Enemy {i} - {enemy.name}: {enemy.health}/{enemy.max_health}")
+
+        if combat.is_player_turn():
+            print("\nYour turn!")
+            print("Choose a target:")
+            for i, enemy in enumerate(combat.enemies, 1):
+                print(f"{i}. {enemy.name} (HP: {enemy.health}/{enemy.max_health})")
+            print("0. Use Special Ability")
+
+            while True:
+                try:
+                    choice = int(input("Select target (or 0 for special): ")) - 1
+                    if choice == -1:
+                        if player.special_cooldown == 0:
+                            # Use special on first alive enemy
+                            for idx, e in enumerate(combat.enemies):
+                                if e.is_alive():
+                                    combat.player_turn(idx, use_special=True)
+                                    break
+                            break
+                        else:
+                            print(f"Power Strike is on cooldown for {player.special_cooldown} more turn(s).")
+                            print("Please choose a normal attack target instead.")
+                            continue
+                    elif 0 <= choice < len(combat.enemies):
+                        combat.player_turn(choice)
+                        break
+                    else:
+                        print("Invalid choice. Try again.")
+                except ValueError:
+                    print("Invalid input. Please enter a number.")
+        else:
+            combat.process_enemy_turns()
+
+    # Combat ended
+    if player.health > 0:
+        print("\nVictory! All enemies defeated!")
+    else:
+        print("\nDefeat! You were defeated in combat.")
+
+
+if __name__ == "__main__":
+    main()

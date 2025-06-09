@@ -105,3 +105,27 @@ class Character:
         """Reduce cooldown counters by 1 if above zero."""
         if self.special_cooldown > 0:
             self.special_cooldown -= 1
+
+class Combat:
+    """
+    Manages turn-based combat between player and enemies.
+    """
+
+    def __init__(self, player, enemies):
+        self.player = player
+        self.enemies = enemies
+        self.turn_queue = sorted([player] + enemies, key=lambda c: c.speed, reverse=True)
+        self.current_turn_index = 0
+
+        # Track enemy Enrage cooldowns (dict enemy -> cooldown int)
+        self.enemy_enrage_cooldowns = {enemy: 0 for enemy in enemies}
+
+    def is_combat_over(self):
+        """Check if combat is over (player dead or all enemies dead)."""
+        return not self.player.is_alive() or all(not e.is_alive() for e in self.enemies)
+
+    def is_player_turn(self):
+        """Check if it is currently the player's turn."""
+        return self.turn_queue[self.current_turn_index] == self.player
+    
+    
